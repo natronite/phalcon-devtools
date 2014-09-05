@@ -190,6 +190,7 @@ class AllModels extends Component
                     'schema' => $schema,
                     'extends' => isset($this->_options['extends']) ? $this->_options['extends'] : null,
                     'namespace' => $this->_options['namespace'],
+                    'derivedNamespace' => $this->_options['derivedNamespace'],
                     'force' => $forceProcess,
                     'hasMany' => $hasManyModel,
                     'belongsTo' => $belongsToModel,
