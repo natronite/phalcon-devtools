@@ -331,7 +331,9 @@ class Model extends Component
                         $possibleMethods['get' . $methodName] = true;
                     }
                 }
+                
                 $possibleMethods['getSource'] = true;
+                $possibleMethods['initialize'] = true;
 
                 $possibleMethods['getSource'] = true;
 
