@@ -230,8 +230,8 @@ class Model extends Component
 }
 ";
 
-        $propertyLineTemplate = "* @property %s %s";
-        $propertiesTemplate = "/**
+        $templateProperty = "* @property %s %s";
+        $templateProperties = "/**
  * Class %s
  %s
  *%s
@@ -369,7 +369,7 @@ class Model extends Component
         }
 
 
-        $propertyLines = [];
+        $magicProperties = [];
 
         if (isset($this->_options['hasMany'])) {
             if (count($this->_options['hasMany'])) {
@@ -394,7 +394,7 @@ class Model extends Component
                             $this->_buildRelationOptions( isset($relation['options']) ? $relation["options"] : NULL)
                         );
 
-                        $propertyLines[] = sprintf($propertyLineTemplate, '\\Phalcon\\Mvc\\Model\\Resultset\\Simple', $entityName);
+                        $magicProperties[] = sprintf($templateProperty, '\\Phalcon\\Mvc\\Model\\Resultset\\Simple', $entityName);
                     }
                 }
             }
@@ -408,11 +408,14 @@ class Model extends Component
                         if (isset($this->_options['derivedNamespace'])) {
                             $entityNamespace = "{$this->_options['derivedNamespace']}\\";
                             $relation['options']['alias'] = $entityName;
+                            $magicType = '\\' . $entityNamespace . $entityName;
                         } else if (isset($this->_options['namespace'])) {
                             $entityNamespace = "{$this->_options['namespace']}\\";
                             $relation['options']['alias'] = $entityName;
+                            $magicType = $entityName;
                         } else {
                             $entityNamespace = '';
+                            $magicType = $entityName;
                         }
                         $initialize[] = sprintf(
                             $templateRelation,
@@ -422,16 +425,16 @@ class Model extends Component
                             $relation['relationFields'],
                             $this->_buildRelationOptions(isset($relation['options']) ? $relation["options"] : NULL)
                         );
-
-                        $propertyLines[] = sprintf($propertyLineTemplate,  $entityName, $entityName);
+                        
+                        $magicProperties[] = sprintf($templateProperty, $magicType, $entityName);
                     }
                 }
             }
         }
 
-        if(count($propertyLines)){
-            $propertyLines = "\n " . rtrim(implode("\n ", $propertyLines));
-            $properties = sprintf($propertiesTemplate, $className, $package, $propertyLines);
+        if(count($magicProperties)){
+            $propertyLines = "\n " . rtrim(implode("\n ", $magicProperties));
+            $properties = sprintf($templateProperties, $className, $package, $propertyLines);
         } else {
             $properties = '';
         }
@@ -646,10 +649,8 @@ class Model extends Component
 
         $str_use = '';
         if (!empty($uses)) {
-            $str_use = implode(PHP_EOL, $uses) . PHP_EOL . PHP_EOL;
+            $str_use = implode(PHP_EOL, array_unique($uses)) . PHP_EOL . PHP_EOL;
         }
-
-        echo "\n".$extends."\n";
 
         $code = sprintf(
             $templateCode,
