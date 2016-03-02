@@ -230,30 +230,30 @@ class Model extends Component
 }
 ";
 
-        $templateProperty = "* @property %s %s";
-        $templateProperties = "/**
+        $propertyLineTemplate = "* @property %s %s";
+        $propertiesTemplate = "/**
  * Class %s
  %s
  *%s
  */
 ";
 
-        if (!$this->_options['name']) {
+        if (!$this->options->get('name')) {
             throw new BuilderException("You must specify the table name");
         }
 
         $path = '';
-        if (isset($this->_options['directory'])) {
-            if ($this->_options['directory']) {
-                $path = $this->_options['directory'] . '/';
+        if ($this->options->has('directory')) {
+            if ($this->options->get('directory')) {
+                $path = $this->options->get('directory') . '/';
             }
         } else {
             $path = '.';
         }
 
-        $config = $this->_getConfig($path);
+        $config = $this->getConfig($path);
 
-        if (!isset($this->_options['modelsDir'])) {
+        if (!$this->options->has('modelsDir')) {
             if (!isset($config->application->modelsDir)) {
                 throw new BuilderException(
                     "Builder doesn't knows where is the models directory"
@@ -261,23 +261,23 @@ class Model extends Component
             }
             $modelsDir = $config->application->modelsDir;
         } else {
-            $modelsDir = $this->_options['modelsDir'];
-        }            
-        
-        $modelsDir = rtrim(rtrim($modelsDir, '/'), '\\') . DIRECTORY_SEPARATOR;             
-        
+            $modelsDir = $this->options->get('modelsDir');
+        }
+
+        $modelsDir = rtrim(rtrim($modelsDir, '/'), '\\') . DIRECTORY_SEPARATOR;
+
         if ($this->isAbsolutePath($modelsDir) == false) {
             $modelPath = $path . DIRECTORY_SEPARATOR . $modelsDir;
         } else {
             $modelPath = $modelsDir;
-        }                                 
+        }
 
         $methodRawCode = array();
-        $className = $this->_options['className'];
+        $className = $this->options->get('className');
         $modelPath .= $className . '.php';
 
         if (file_exists($modelPath)) {
-            if (!$this->_options['force']) {
+            if (!$this->options->get('force')) {
                 throw new BuilderException(
                     "The model file '" . $className .
                     ".php' already exists in models dir"
@@ -298,19 +298,19 @@ class Model extends Component
             );
         }
 
-        if (isset($this->_options['namespace'])) {
-            $package = '* @package ' . $this->_options['namespace'];
-            $namespace = 'namespace ' . $this->_options['namespace'] . ';'
+        if ($this->options->has('namespace')) {
+            $package = '* @package ' . $this->options->get('namespace');
+            $namespace = 'namespace ' . $this->options->get('namespace') . ';'
                 . PHP_EOL . PHP_EOL;
-            $methodRawCode[] = sprintf($getSource, $this->_options['name']);
+            $methodRawCode[] = sprintf($getSource, $this->options->get('name'));
         } else {
             $package = '';
             $namespace = '';
         }
 
-        $useSettersGetters = $this->_options['genSettersGetters'];
-        if (isset($this->_options['genDocMethods'])) {
-            $genDocMethods = $this->_options['genDocMethods'];
+        $useSettersGetters = $this->options->get('genSettersGetters');
+        if ($this->options->has('genDocMethods')) {
+            $genDocMethods = $this->options->get('genDocMethods');
         } else {
             $genDocMethods = false;
         }
@@ -338,30 +338,30 @@ class Model extends Component
         $db = new $adapterName($configArray);
 
         $initialize = array();
-        if (isset($this->_options['schema'])) {
-            if ($this->_options['schema'] != $config->database->dbname) {
+        if ($this->options->has('schema')) {
+            if ($this->options->get('schema') != $config->database->dbname) {
                 $initialize[] = sprintf(
-                    $templateThis, 'setSchema', '"' . $this->_options['schema'] . '"'
+                    $templateThis, 'setSchema', '"' . $this->options->get('schema') . '"'
                 );
             }
-            $schema = $this->_options['schema'];
+            $schema = $this->options->get('schema');
         } elseif ($adapter == 'Postgresql') {
             $schema = 'public';
             $initialize[] = sprintf(
-                $templateThis, 'setSchema', '"' . $this->_options['schema'] . '"'
+                $templateThis, 'setSchema', '"' . $this->options->get('schema') . '"'
             );
         } else {
             $schema = $config->database->dbname;
         }
 
-        if ($this->_options['fileName'] != $this->_options['name']) {
-            $initialize[] = sprintf(
-                $templateThis, 'setSource',
-                '\'' . $this->_options['name'] . '\''
-            );
-        }
+        if ($this->options->get('fileName') != $this->options->get('name')) {
+        $initialize[] = sprintf(
+            $templateThis, 'setSource',
+            '\'' . $this->options->get('name') . '\''
+        );
+    }
 
-        $table = $this->_options['name'];
+        $table = $this->options->get('name');
         if ($db->tableExists($table, $schema)) {
             $fields = $db->describeColumns($table, $schema);
         } else {
@@ -371,16 +371,17 @@ class Model extends Component
 
         $magicProperties = [];
 
-        if (isset($this->_options['hasMany'])) {
-            if (count($this->_options['hasMany'])) {
-                foreach ($this->_options['hasMany'] as $relation) {
+        if ($this->options->has('hasMany')) {
+            if (count($this->options->get('hasMany'))) {
+                foreach ($this->options->get('hasMany') as $relation) {
+                    $relation['options'] = [];
                     if (is_string($relation['fields'])) {
                         $entityName = $relation['camelizedName'];
-                        if (isset($this->_options['derivedNamespace'])) {
-                            $entityNamespace = "{$this->_options['derivedNamespace']}\\";
+                        if ($this->options->has('derivedNamespace')) {
+                            $entityNamespace = "{$this->options->get('derivedNamespace')}\\";
                             $relation['options']['alias'] = $entityName;
-                        } else if (isset($this->_options['namespace'])) {
-                            $entityNamespace = "{$this->_options['namespace']}\\";
+                        } else if ($this->options->has('namespace')) {
+                            $entityNamespace = "{$this->options->get('namespace')}\\";
                             $relation['options']['alias'] = $entityName;
                         } else {
                             $entityNamespace = '';
@@ -400,17 +401,18 @@ class Model extends Component
             }
         }
 
-        if (isset($this->_options['belongsTo'])) {
-            if (count($this->_options['belongsTo'])) {
-                foreach ($this->_options['belongsTo'] as $relation) {
+        if ($this->options->has('belongsTo')) {
+            if (count($this->options->get('belongsTo'))) {
+                foreach ($this->options->get('belongsTo') as $relation) {
+                    $relation['options'] = [];
                     if (is_string($relation['fields'])) {
                         $entityName = $relation['referencedModel'];
-                        if (isset($this->_options['derivedNamespace'])) {
-                            $entityNamespace = "{$this->_options['derivedNamespace']}\\";
+                        if ($this->options->has('derivedNamespace')) {
+                            $entityNamespace = "{$this->options->get('derivedNamespace')}\\";
                             $relation['options']['alias'] = $entityName;
                             $magicType = '\\' . $entityNamespace . $entityName;
-                        } else if (isset($this->_options['namespace'])) {
-                            $entityNamespace = "{$this->_options['namespace']}\\";
+                        } else if ($this->options->has('namespace')) {
+                            $entityNamespace = "{$this->options->get('namespace')}\\";
                             $relation['options']['alias'] = $entityName;
                             $magicType = $entityName;
                         } else {
@@ -432,9 +434,9 @@ class Model extends Component
             }
         }
 
-        if(count($magicProperties)){
-            $propertyLines = "\n " . rtrim(implode("\n ", $magicProperties));
-            $properties = sprintf($templateProperties, $className, $package, $propertyLines);
+        if(count($propertyLines)){
+            $propertyLines = "\n " . rtrim(implode("\n ", $propertyLines));
+            $properties = sprintf($propertiesTemplate, $className, $package, $propertyLines);
         } else {
             $properties = '';
         }
@@ -458,9 +460,9 @@ class Model extends Component
                 require $modelPath;
 
                 $linesCode = file($modelPath);
-                $fullClassName = $this->_options['className'];
-                if (isset($this->_options['namespace'])) {
-                    $fullClassName = $this->_options['namespace'].'\\'.$fullClassName;
+                $fullClassName = $this->options->get('className');
+                if ($this->options->has('namespace')) {
+                    $fullClassName = $this->options->get('namespace').'\\'.$fullClassName;
                 }
                 $reflection = new \ReflectionClass($fullClassName);
                 foreach ($reflection->getMethods() as $method) {
@@ -526,9 +528,9 @@ class Model extends Component
          * Check if there has been an extender class
          */
         $extends = '\\Phalcon\\Mvc\\Model';
-        if (isset($this->_options['extends'])) {
-            if (!empty($this->_options['extends'])) {
-                $extends = $this->_options['extends'];
+        if ($this->options->has('extends')) {
+            if (!empty($this->options->get('extends'))) {
+                $extends = $this->options->get('extends');
             }
         }
 
@@ -536,9 +538,9 @@ class Model extends Component
          * Check if there have been any excluded fields
          */
         $exclude = array();
-        if (isset($this->_options['excludeFields'])) {
-            if (!empty($this->_options['excludeFields'])) {
-                $keys = explode(',', $this->_options['excludeFields']);
+        if ($this->options->has('excludeFields')) {
+            if (!empty($this->options->get('excludeFields'))) {
+                $keys = explode(',', $this->options->get('excludeFields'));
                 if (count($keys) > 0) {
                     foreach ($keys as $key) {
                         $exclude[trim($key)] = '';
@@ -643,14 +645,16 @@ class Model extends Component
             $content .= sprintf($templateFind, $className, $className);
         }
 
-        if (isset($this->_options['mapColumn'])) {
+        if ($this->options->has('mapColumn')) {
             $content .= $this->_genColumnMapCode($fields);
         }
 
         $str_use = '';
         if (!empty($uses)) {
-            $str_use = implode(PHP_EOL, array_unique($uses)) . PHP_EOL . PHP_EOL;
+            $str_use = implode(PHP_EOL, $uses) . PHP_EOL . PHP_EOL;
         }
+
+        echo "\n".$extends."\n";
 
         $code = sprintf(
             $templateCode,
@@ -664,11 +668,11 @@ class Model extends Component
         );
 
         if (!@file_put_contents($modelPath, $code)) {
-                throw new BuilderException("Unable to write to '$modelPath'");
+            throw new BuilderException("Unable to write to '$modelPath'");
         }
 
         if ($this->isConsole()) {
-            $this->_notifySuccess('Model "' . $this->_options['name'] .'" was successfully created.');
+            $this->_notifySuccess('Model "' . $this->options->get('name') .'" was successfully created.');
         }
     }
 

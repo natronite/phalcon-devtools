@@ -50,6 +50,10 @@ class AllModels extends Component
             $options['abstract'] = false;
         }
 
+        if (!isset($options['mapColumns'])) {
+            $options['mapColumns'] = false;
+        }
+
         parent::__construct($options);
     }
 
