@@ -4,7 +4,7 @@
   +------------------------------------------------------------------------+
   | Phalcon Developer Tools                                                |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2014 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
   | with this package in the file docs/LICENSE.txt.                        |
@@ -21,18 +21,14 @@
 namespace Phalcon\Version;
 
 /**
- * Phalcon\Version\Item
+ * Item Class
  *
  * Allows to manipulate version texts
  *
- * @category 	Phalcon
- * @package 	Scripts
- * @copyright   Copyright (c) 2011-2014 Phalcon Team (team@phalconphp.com)
- * @license 	New BSD License
+ * @package Phalcon\Version
  */
 class Item
 {
-
     /**
      * @var string
      */
@@ -52,7 +48,7 @@ class Item
      * @param     $version
      * @param int $numberParts
      */
-    public function __construct($version, $numberParts=3)
+    public function __construct($version, $numberParts = 3)
     {
         $n = 9;
         $versionStamp = 0;
@@ -76,11 +72,11 @@ class Item
         }
         foreach ($this->_parts as $part) {
             if (is_numeric($part)) {
-                $versionStamp += $part*pow(10, $n);
+                $versionStamp += $part * pow(10, $n);
             } else {
-                $versionStamp += ord($part)*pow(10, $n);
+                $versionStamp += ord($part) * pow(10, $n);
             }
-            $n-=3;
+            $n -= 3;
         }
         $this->_versionStamp = $versionStamp;
         $this->_version = $version;
@@ -127,11 +123,11 @@ class Item
     {
         if (count($versions) == 0) {
             return null;
-        } else {
-            $versions = self::sortDesc($versions);
-
-            return $versions[0];
         }
+
+        $versions = self::sortDesc($versions);
+
+        return $versions[0];
     }
 
     /**
@@ -139,8 +135,8 @@ class Item
      *
      * @param  string  $initialVersion
      * @param  string  $finalVersion
-     * @param  array   $versions       Item[]
-     * @return boolean
+     * @param  array   $versions Item[]
+     * @return Item[]
      */
     public static function between($initialVersion, $finalVersion, $versions)
     {
@@ -149,22 +145,30 @@ class Item
         if (!is_object($initialVersion)) {
             $initialVersion = new self($initialVersion);
         }
-        if ( !is_object($finalVersion)) {
+
+        if (!is_object($finalVersion)) {
             $finalVersion = new self($finalVersion);
         }
-        if ($initialVersion->getStamp() > $finalVersion->getStamp()) {
+
+        $betweenVersions = array();
+        if ($initialVersion->getStamp() == $finalVersion->getStamp()) {
+            return $betweenVersions; // nothing to do
+        }
+
+        if ($initialVersion->getStamp() < $finalVersion->getStamp()) {
+            $versions = self::sortAsc($versions);
+        } else {
             $versions = self::sortDesc($versions);
             list($initialVersion, $finalVersion) = array($finalVersion, $initialVersion);
         }
-        $betweenVersions = array();
+
         foreach ($versions as $version) {
-            /**
-             * @var $version Item
-             */
+            /** @var Item $version */
             if (($version->getStamp() >= $initialVersion->getStamp()) && ($version->getStamp() <= $finalVersion->getStamp())) {
                 $betweenVersions[] = $version;
             }
         }
+
         return $betweenVersions ;
     }
 
@@ -186,9 +190,9 @@ class Item
         $parts = array_reverse($this->_parts);
         if (isset($parts[0])) {
             if (is_numeric($parts[0])) {
-                $parts[0]+=$number;
+                $parts[0] += $number;
             } else {
-                $parts[0] = ord($parts[0])+$number;
+                $parts[0] = ord($parts[0]) + $number;
             }
         }
 
@@ -202,5 +206,4 @@ class Item
     {
         return $this->_version;
     }
-
 }

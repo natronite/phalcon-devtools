@@ -4,7 +4,7 @@
   +------------------------------------------------------------------------+
   | Phalcon Developer Tools                                                |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2014 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
   | with this package in the file docs/LICENSE.txt.                        |
@@ -20,16 +20,13 @@
 
 namespace Phalcon\Commands;
 
-/**
- * \Phalcon\Commands\CommandsException
- *
- * @category     Phalcon
- * @package 	   Script
- * @subpackage   Exception
- * @copyright    Copyright (c) 2011-2014 Phalcon Team (team@phalconphp.com)
- * @license 	   New BSD License
- */
-class CommandsException extends \Phalcon\Exception
-{
+use Phalcon\Exception;
 
+/**
+ * Commands Exception
+ *
+ * @package Phalcon\Commands
+ */
+class CommandsException extends Exception
+{
 }

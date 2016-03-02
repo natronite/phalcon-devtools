@@ -5,7 +5,7 @@
   +------------------------------------------------------------------------+
   | Phalcon Developer Tools                                                |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2014 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2015 Phalcon Team (http://www.phalconphp.com)       |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
   | with this package in the file docs/LICENSE.txt.                        |
@@ -30,32 +30,33 @@ use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Exception as PhalconException;
 
 try {
-
-    $extensionLoaded = true;
     if (!extension_loaded('phalcon')) {
-        $extensionLoaded = false;
-        throw new Exception('Phalcon extension isn\'t installed, follow these instructions to install it: http://docs.phalconphp.com/en/latest/reference/install.html');
+        throw new Exception(
+            "Phalcon extension isn't installed, follow these instructions to install it: " .
+            'https://docs.phalconphp.com/en/latest/reference/install.html'
+        );
     }
 
     $loader = new Loader();
+    $loader
+        ->registerDirs(array(__DIR__ . '/scripts/'))
+        ->registerNamespaces(array('Phalcon' => __DIR__ . '/scripts/'))
+        ->register();
 
-    $loader->registerDirs(array(
-        __DIR__ . '/scripts/'
-    ));
-
-    $loader->registerNamespaces(array(
-        'Phalcon' => __DIR__ . '/scripts/'
-    ));
-
-    $loader->register();
+    if (file_exists('.phalcon/autoload.php')) {
+        require_once '.phalcon/autoload.php';
+    }
 
     if (Version::getId() < Script::COMPATIBLE_VERSION) {
-        throw new PhalconException('Your Phalcon version isn\'t compatible with Developer Tools, download the latest at: http://phalconphp.com/download');
+        throw new Exception(
+            sprintf(
+                "Your Phalcon version isn't compatible with Developer Tools, download the latest at: %s",
+                Script::DOC_DOWNLOAD_URL
+            )
+        );
     }
 
-    if (!defined('TEMPLATE_PATH')) {
-        define('TEMPLATE_PATH', __DIR__ . '/templates');
-    }
+    defined('TEMPLATE_PATH') || define('TEMPLATE_PATH', __DIR__ . '/templates');
 
     $vendor = sprintf('Phalcon DevTools (%s)', Version::get());
     print PHP_EOL . Color::colorize($vendor, Color::FG_GREEN, Color::AT_BOLD) . PHP_EOL . PHP_EOL;
@@ -69,6 +70,7 @@ try {
     $commandsToEnable = array(
         '\Phalcon\Commands\Builtin\Enumerate',
         '\Phalcon\Commands\Builtin\Controller',
+        '\Phalcon\Commands\Builtin\Module',
         '\Phalcon\Commands\Builtin\Model',
         '\Phalcon\Commands\Builtin\AllModels',
         '\Phalcon\Commands\Builtin\Project',
@@ -76,23 +78,16 @@ try {
         '\Phalcon\Commands\Builtin\Migration',
         '\Phalcon\Commands\Builtin\Webtools'
     );
+
     foreach ($commandsToEnable as $command) {
         $script->attach(new $command($script, $eventsManager));
     }
 
     $script->run();
-
 } catch (PhalconException $e) {
-    if ($extensionLoaded) {
-        print Color::error($e->getMessage()) . PHP_EOL;
-    } else {
-        print 'ERROR: ' . $e->getMessage() . PHP_EOL;
-    }
-
+    fwrite(STDERR, Color::error($e->getMessage()) . PHP_EOL);
+    exit(1);
 } catch (Exception $e) {
-    if ($extensionLoaded) {
-        print Color::error($e->getMessage()) . PHP_EOL;
-    } else {
-        print 'ERROR: ' . $e->getMessage() . PHP_EOL;
-    }
+    fwrite(STDERR, 'ERROR: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
 }

@@ -4,7 +4,7 @@
   +------------------------------------------------------------------------+
   | Phalcon Developer Tools                                                |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2014 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
   | with this package in the file docs/LICENSE.txt.                        |
@@ -24,44 +24,49 @@ use Phalcon\Text;
 use Phalcon\Builder;
 use Phalcon\Script\Color;
 use Phalcon\Commands\Command;
-use Phalcon\Commands\CommandsInterface;
 use Phalcon\Builder\Model as ModelBuilder;
 
 /**
- * CreateModel
+ * Model Command
  *
  * Create a model from command line
  *
- * @category 	Phalcon
- * @package 	Commands
- * @subpackage  Builtin
- * @copyright   Copyright (c) 2011-2014 Phalcon Team (team@phalconphp.com)
- * @license 	New BSD License
+ * @package Phalcon\Commands\Builtin
  */
-class Model extends Command implements CommandsInterface
+class Model extends Command
 {
-
-    protected $_possibleParameters = array(
-        'name=s'          => "Table name",
-        'schema=s'        => "Name of the schema. [optional]",
-        'namespace=s'     => "Model's namespace [optional]",
-        'get-set'         => "Attributes will be protected and have setters/getters. [optional]",
-        'extends=s'       => 'Model extends the class name supplied [optional]',
-        'excludefields=l' => 'Excludes fields defined in a comma separated list [optional]',         
-        'doc'             => "Helps to improve code completion on IDEs [optional]",     
-        'directory=s'     => "Base path on which project is located [optional]",
-        'output=s'        => "Folder where models are located [optional]",    
-        'force'           => "Rewrite the model. [optional]",
-        'trace'           => "Shows the trace of the framework in case of exception. [optional]",
-        'mapcolumn'       => 'Get some code for map columns. [optional]',
-    );
+    /**
+     * {@inheritdoc}
+     *
+     * @return array
+     */
+    public function getPossibleParams()
+    {
+        return array(
+            'name=s'          => 'Table name',
+            'schema=s'        => 'Name of the schema [optional]',
+            'namespace=s'     => "Model's namespace [optional]",
+            'get-set'         => 'Attributes will be protected and have setters/getters [optional]',
+            'extends=s'       => 'Model extends the class name supplied [optional]',
+            'excludefields=l' => 'Excludes fields defined in a comma separated list [optional]',
+            'doc'             => 'Helps to improve code completion on IDEs [optional]',
+            'directory=s'     => 'Base path on which project is located [optional]',
+            'output=s'        => 'Folder where models are located [optional]',
+            'force'           => 'Rewrite the model [optional]',
+            'trace'           => 'Shows the trace of the framework in case of exception [optional]',
+            'mapcolumn'       => 'Get some code for map columns [optional]',
+            'abstract'        => 'Abstract Model [optional]'
+        );
+    }
 
     /**
-     * @param $parameters
+     * {@inheritdoc}
+     *
+     * @param array $parameters
+     * @return mixed
      */
-    public function run($parameters)
+    public function run(array $parameters)
     {
-
         $name = $this->getOption(array('name', 1));
 
         $className = Text::camelize(isset($parameters[1]) ? $parameters[1] : $name);
@@ -84,6 +89,7 @@ class Model extends Command implements CommandsInterface
                 'excludeFields'     => $this->getOption('excludefields'),
                 'force'             => $this->isReceivedOption('force'),
                 'mapColumn'         => $this->isReceivedOption('mapcolumn'),
+                'abstract'          => $this->isReceivedOption('abstract')
             )
         );
 
@@ -91,7 +97,7 @@ class Model extends Command implements CommandsInterface
     }
 
     /**
-     * Returns the commands provided by the command
+     * {@inheritdoc}
      *
      * @return array
      */
@@ -101,15 +107,7 @@ class Model extends Command implements CommandsInterface
     }
 
     /**
-     * Checks whether the command can be executed outside a Phalcon project
-     */
-    public function canBeExternal()
-    {
-        return false;
-    }
-
-    /**
-     * Prints the help for current command.
+     * {@inheritdoc}
      *
      * @return void
      */
@@ -122,14 +120,14 @@ class Model extends Command implements CommandsInterface
         print Color::colorize('  model [table-name] [options]', Color::FG_GREEN) . PHP_EOL . PHP_EOL;
 
         print Color::head('Arguments:') . PHP_EOL;
-        print Color::colorize('  ?', Color::FG_GREEN);
+        print Color::colorize('  help', Color::FG_GREEN);
         print Color::colorize("\tShows this help text") . PHP_EOL . PHP_EOL;
 
-        $this->printParameters($this->_possibleParameters);
+        $this->printParameters($this->getPossibleParams());
     }
 
     /**
-     * Returns number of required parameters for this command
+     * {@inheritdoc}
      *
      * @return int
      */

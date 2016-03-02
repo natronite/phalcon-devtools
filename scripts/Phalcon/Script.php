@@ -4,7 +4,7 @@
   +------------------------------------------------------------------------+
   | Phalcon Developer Tools                                                |
   +------------------------------------------------------------------------+
-  | Copyright (c) 2011-2014 Phalcon Team (http://www.phalconphp.com)       |
+  | Copyright (c) 2011-2016 Phalcon Team (http://www.phalconphp.com)       |
   +------------------------------------------------------------------------+
   | This source file is subject to the New BSD License that is bundled     |
   | with this package in the file docs/LICENSE.txt.                        |
@@ -15,6 +15,7 @@
   +------------------------------------------------------------------------+
   | Authors: Andres Gutierrez <andres@phalconphp.com>                      |
   |          Eduar Carvajal <eduar@phalconphp.com>                         |
+  |          Serghei Iakovlev <serghei@phalconphp.com>                     |
   +------------------------------------------------------------------------+
 */
 
@@ -23,21 +24,24 @@ namespace Phalcon;
 use Phalcon\Commands\Command;
 use Phalcon\Script\ScriptException;
 use Phalcon\Events\Manager as EventsManager;
+use DirectoryIterator;
 
 /**
- * \Phalcon\Script
+ * Script Class
  *
  * Component that allows you to write scripts to use CLI.
  *
- * @category 	Phalcon
- * @package 	Scripts
- * @copyright   Copyright (c) 2011-2014 Phalcon Team (team@phalconphp.com)
- * @license 	New BSD License
+ * @package Phalcon
  */
 class Script
 {
+    /**
+     * Phalcon 2.0.0
+     * @type int
+     */
+    const COMPATIBLE_VERSION = 2000023;
 
-    const COMPATIBLE_VERSION = '1020000';
+    const DOC_DOWNLOAD_URL = 'http://phalconphp.com/download';
 
     /**
      * Events Manager
@@ -49,12 +53,12 @@ class Script
     /**
      * Commands attached to the Script
      *
-     * @var array
+     * @var \Phalcon\Commands\Command[]
      */
     protected $_commands;
 
     /**
-     * \Phalcon\Script constructor
+     * Script Constructor
      *
      * @param \Phalcon\Events\Manager $eventsManager
      */
@@ -104,78 +108,88 @@ class Script
         return $this->_commands;
     }
 
+    /**
+     * Dispatch the Command
+     *
+     * @param Command $command
+     * @return bool
+     */
     public function dispatch(Command $command)
     {
-        //If beforeCommand fails abort
+        // If beforeCommand fails abort
         if ($this->_eventsManager->fire('command:beforeCommand', $command) === false) {
             return false;
         }
 
-        //If run the commands fails abort too
+        // If run the commands fails abort too
         if ($command->run($command->getParameters()) === false) {
             return false;
         }
 
         $this->_eventsManager->fire('command:afterCommand', $command);
+
+        return true;
     }
 
     /**
      * Run the scripts
+     *
+     * @throws ScriptException
      */
     public function run()
     {
-
         if (!isset($_SERVER['argv'][1])) {
-
-            $_SERVER['argv']["1"] = 'commands';
+            $_SERVER['argv'][1] = 'commands';
         }
 
         $input = $_SERVER['argv'][1];
 
-        //Try to dispatch the command
+        // Try to dispatch the command
         foreach ($this->_commands as $command) {
-            $providedCommands = $command->getCommands();
-            if (in_array($input, $providedCommands)) {
+            if ($command->hasIdentifier($input)) {
                 return $this->dispatch($command);
             }
         }
 
-        //Check for alternatives
+        // Check for alternatives
         $available = array();
         foreach ($this->_commands as $command) {
             $providedCommands = $command->getCommands();
-            foreach ($providedCommands as $command) {
-                $soundex = soundex($command);
+            foreach ($providedCommands as $alias) {
+                $soundex = soundex($alias);
                 if (!isset($available[$soundex])) {
                     $available[$soundex] = array();
                 }
-                $available[$soundex][] = $command;
+
+                $available[$soundex][] = $alias;
             }
         }
 
-        //Show exception with/without alternatives
+        // Show exception with/without alternatives
         $soundex = soundex($input);
-        if (isset($available[$soundex])) {
-            throw new ScriptException('"'. $input . '" is not a recognized command. Did you mean: ' . join(' or ', $available[$soundex]) . '?');
-        } else {
-            throw new ScriptException('"'. $input . '" is not a recognized command');
-        }
+        $message = sprintf('%s is not a recognized command.', $input);
 
+        if (isset($available[$soundex])) {
+            throw new ScriptException(sprintf('%s Did you mean: %s?', $message, join(' or ', $available[$soundex])));
+        } else {
+            throw new ScriptException($message);
+        }
     }
 
     public function loadUserScripts()
     {
         if (file_exists('.phalcon/project.ini')) {
             $config = parse_ini_file('.phalcon/project.ini');
+
             if (isset($config['scripts'])) {
                 foreach (explode(',', $config['scripts']) as $directory) {
                     if (!is_dir($directory)) {
                         throw new ScriptException("Cannot load user scripts in directory '" . $directory . "'");
                     }
-                    $iterator = new \DirectoryIterator($directory);
+
+                    $iterator = new DirectoryIterator($directory);
                     foreach ($iterator as $item) {
                         if (!$item->isDir()) {
-
                             require $item->getPathName();
 
                             $className = preg_replace('/\.php$/', '', $item->getBaseName());
@@ -190,5 +204,4 @@ class Script
             }
         }
     }
-
 }
