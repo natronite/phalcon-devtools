@@ -395,7 +395,7 @@ class Model extends Component
                             $this->_buildRelationOptions( isset($relation['options']) ? $relation["options"] : NULL)
                         );
 
-                        $magicProperties[] = sprintf($templateProperty, '\\Phalcon\\Mvc\\Model\\Resultset\\Simple', $entityName);
+                        $magicProperties[] = sprintf($propertyLineTemplate, '\\Phalcon\\Mvc\\Model\\Resultset\\Simple', $entityName);
                     }
                 }
             }
@@ -428,14 +428,14 @@ class Model extends Component
                             $this->_buildRelationOptions(isset($relation['options']) ? $relation["options"] : NULL)
                         );
                         
-                        $magicProperties[] = sprintf($templateProperty, $magicType, $entityName);
+                        $magicProperties[] = sprintf($propertyLineTemplate, $magicType, $entityName);
                     }
                 }
             }
         }
 
-        if(count($propertyLines)){
-            $propertyLines = "\n " . rtrim(implode("\n ", $propertyLines));
+        if(count($magicProperties)){
+            $propertyLines = "\n " . rtrim(implode("\n ", $magicProperties));
             $properties = sprintf($propertiesTemplate, $className, $package, $propertyLines);
         } else {
             $properties = '';
@@ -645,7 +645,7 @@ class Model extends Component
             $content .= sprintf($templateFind, $className, $className);
         }
 
-        if ($this->options->has('mapColumn')) {
+        if ($this->options->get('mapColumn', false)) {
             $content .= $this->_genColumnMapCode($fields);
         }
 

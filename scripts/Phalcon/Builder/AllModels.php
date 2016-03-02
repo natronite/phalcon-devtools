@@ -50,10 +50,6 @@ class AllModels extends Component
             $options['abstract'] = false;
         }
 
-        if (!isset($options['mapColumns'])) {
-            $options['mapColumns'] = false;
-        }
-
         parent::__construct($options);
     }
 
@@ -87,7 +83,7 @@ class AllModels extends Component
         $defineRelations = $this->options->get('defineRelations', false);
         $defineForeignKeys = $this->options->get('foreignKeys', false);
         $genSettersGetters = $this->options->get('genSettersGetters', false);
-        $mapColumn = $this->options->get('mapColumn', null);
+        $mapColumn = $this->options->get('mapColumn', false);
 
         $adapter = $config->database->adapter;
         $this->isSupportedAdapter($adapter);
