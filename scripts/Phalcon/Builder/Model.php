@@ -62,7 +62,7 @@ class Model extends Component
         if (!isset($options['fileName'])) {
             $options['fileName'] = $options['name'];
         }
-        $this->_options = $options;
+        parent::__construct($options);
     }
 
     /**
